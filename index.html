@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pain Calculator</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0F1117;--surface:#181C26;--s2:#1E2333;--border:#2A3045;
+    --orange:#FF7A59;--blue:#60A5FA;--purple:#A78BFA;--green:#34D399;
+    --text:#E8ECF4;--muted:#6B7898;
+    --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  }
+  *{font-family:var(--sans)}
+  body{background:var(--bg);color:var(--text);min-height:100vh}
+
+  .topbar{background:var(--surface);border-bottom:1px solid var(--border);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .tl{display:flex;align-items:center;gap:9px}
+  .logo{width:24px;height:24px;background:var(--orange);border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0}
+  .topbar h1{font-size:12px;font-weight:500;color:var(--muted)}
+  .co-name{font-size:13px;font-weight:600;color:var(--text)}
+  .btn-reset{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:5px 12px;border-radius:5px;cursor:pointer}
+  .btn-reset:hover{color:var(--text);border-color:var(--muted)}
+
+  .layout{display:grid;grid-template-columns:1fr 310px;min-height:calc(100vh - 48px)}
+  .left{padding:22px 26px;overflow-y:auto;border-right:1px solid var(--border)}
+
+  /* CLIENT */
+  .client-row{display:grid;grid-template-columns:1fr 1fr 150px;gap:10px;margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border)}
+  .fl{display:block;font-size:10px;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}
+  input.fi,select.fi{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-size:13px;padding:7px 10px;border-radius:6px;outline:none;transition:border-color .15s}
+  input.fi:focus,select.fi:focus{border-color:var(--orange)}
+  select.fi option{background:var(--s2)}
+
+  /* SECTIONS */
+  .sec{margin-bottom:12px;border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .sec.open{border-color:var(--sc)}
+  .s-proc{--sc:var(--orange)}.s-biz{--sc:var(--blue)}.s-id{--sc:var(--purple)}.s-tech{--sc:var(--green)}.s-hs{--sc:var(--orange)}.s-ao{--sc:#F59E0B}
+  .sec-head{display:flex;align-items:center;justify-content:space-between;padding:12px 15px;cursor:pointer;background:var(--surface);user-select:none}
+  .sec-head:hover{background:var(--s2)}
+  .sh-l{display:flex;align-items:center;gap:9px}
+  .sdot{width:8px;height:8px;border-radius:50%;background:var(--sc);flex-shrink:0}
+  .stitle{font-size:13px;font-weight:600}
+  .sh-r{display:flex;align-items:center;gap:10px}
+  .sval{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--sc)}
+  .sval.empty{color:var(--muted);font-size:11px;font-family:var(--sans)}
+  .chev{width:14px;height:14px;color:var(--muted);transition:transform .2s}
+  .sec.open .chev{transform:rotate(180deg)}
+  .sec-body{display:none;padding:15px;background:var(--bg);border-top:1px solid var(--border)}
+  .sec.open .sec-body{display:block}
+
+  /* Q ROWS */
+  .qrow{margin-bottom:14px}.qrow:last-child{margin-bottom:0}
+  .ql{font-size:12px;font-weight:500;color:var(--text);margin-bottom:3px;line-height:1.4}
+  .qh{font-size:11px;color:var(--muted);margin-bottom:9px;line-height:1.5}
+  .qi{display:flex;flex-wrap:wrap;gap:8px;align-items:flex-end}
+  .qig{display:flex;flex-direction:column;gap:3px}
+  .qig .ml{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .qig input,.qig select{background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;padding:7px 10px;border-radius:6px;outline:none;width:120px;transition:border-color .15s}
+  .qig input:focus,.qig select:focus{border-color:var(--sc,var(--orange))}
+  .qig select{font-family:var(--sans)}
+  .qx{font-size:13px;color:var(--muted);padding-bottom:2px}
+  .qres{margin-top:9px;padding:8px 11px;border-radius:6px;background:var(--surface);border-left:3px solid var(--sc,var(--orange));font-size:12px;color:var(--muted);line-height:1.5}
+  .qres .n{font-family:var(--mono);font-weight:600;color:var(--sc,var(--orange))}
+  .qta{width:100%;background:var(--s2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:8px 10px;border-radius:6px;outline:none;resize:vertical;min-height:52px;line-height:1.5;transition:border-color .15s}
+  .qta:focus{border-color:var(--purple)}
+
+  /* TECH STACK */
+  .th{display:grid;grid-template-columns:1fr 130px 28px;gap:6px;margin-bottom:5px}
+  .th span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .trow{display:grid;grid-template-columns:1fr 130px 28px;gap:6px;align-items:center;margin-bottom:6px}
+  .trow input{background:var(--s2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:7px 9px;border-radius:6px;outline:none;width:100%;transition:border-color .15s}
+  .trow input:first-child{font-family:var(--sans)}
+  .trow input:nth-child(2){font-family:var(--mono)}
+  .trow input:focus{border-color:var(--green)}
+  .t-add{background:none;border:1px dashed var(--border);color:var(--muted);font-size:11px;padding:7px;border-radius:6px;cursor:pointer;width:100%;margin-top:2px;transition:all .15s}
+  .t-add:hover{border-color:var(--green);color:var(--green)}
+  .t-del{background:none;border:1px solid var(--border);color:var(--muted);font-size:13px;border-radius:5px;cursor:pointer;width:28px;height:32px;display:flex;align-items:center;justify-content:center}
+  .t-del:hover{color:#F87171;border-color:#F87171}
+  .tech-sum{display:flex;justify-content:space-between;align-items:center;padding:8px 0 0;border-top:1px solid var(--border);margin-top:6px}
+  .tech-sum span:first-child{font-size:11px;color:var(--muted)}
+  .tech-sum span:last-child{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--green)}
+
+  /* HUBSPOT HUBS */
+  .hub-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+  .hub-tab{background:none;border:1px solid var(--border);color:var(--muted);font-size:11px;padding:5px 12px;border-radius:20px;cursor:pointer;transition:all .15s}
+  .hub-tab.on{background:var(--orange);border-color:var(--orange);color:#fff;font-weight:600}
+  .hub-block{display:none;background:var(--s2);border-radius:8px;padding:12px 14px;margin-bottom:10px}
+  .hub-block.show{display:block}
+  .hub-block-title{font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;display:flex;justify-content:space-between;align-items:center}
+  .hub-block-title span{font-family:var(--mono);font-size:12px;color:var(--orange);text-transform:none;letter-spacing:0}
+  .hg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+  .hg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  .hsf{display:flex;flex-direction:column;gap:3px}
+  .hsf label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .hsf input,.hsf select{background:var(--bg);border:1px solid var(--border);color:var(--text);font-size:12px;padding:7px 9px;border-radius:6px;outline:none;width:100%;transition:border-color .15s}
+  .hsf input{font-family:var(--mono)}
+  .hsf select{font-family:var(--sans)}
+  .hsf input:focus,.hsf select:focus{border-color:var(--orange)}
+  .hsf select option{background:var(--s2)}
+  .mktg-note{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.5}
+
+  /* HS SUMMARY */
+  .hs-total-row{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;border-top:1px solid var(--border);margin-top:6px}
+  .hs-total-row span:first-child{font-size:12px;color:var(--muted)}
+  .hs-total-row span:last-child{font-family:var(--mono);font-size:14px;font-weight:600;color:var(--orange)}
+  .hs-gdisc-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-top:1px solid var(--border);margin-top:6px}
+  .hs-gdisc-row span{font-size:12px;color:var(--muted)}
+  .hs-gdisc-row input{background:var(--s2);border:1px solid var(--border);color:var(--text);font-family:var(--mono);font-size:13px;padding:6px 10px;border-radius:6px;outline:none;width:80px;text-align:right}
+  .hs-gdisc-row input:focus{border-color:var(--orange)}
+  .hs-final-box{background:var(--surface);border-radius:8px;padding:12px 14px;margin-top:10px}
+  .hsr{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px}
+  .hsr:last-child{border-bottom:none;padding-bottom:0}
+  .hsr .hl{color:var(--muted)}.hsr .hv{font-family:var(--mono);font-weight:600;color:var(--text)}
+  .hsr.tot .hl{color:var(--text);font-weight:600;font-size:13px}.hsr.tot .hv{color:var(--orange);font-size:14px}
+  .hsr.sav .hv{color:var(--green)}
+  .hs-note{font-size:11px;color:var(--muted);margin-top:8px;line-height:1.5}
+
+  /* ADD-ONS — fully separate section */
+  .ao-row{display:grid;grid-template-columns:1fr 120px 110px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--border)}
+  .ao-row:last-child{border-bottom:none}
+  .ao-name{font-size:12px;color:var(--text);font-weight:500}
+  .ao-note{font-size:10px;color:var(--muted);margin-top:2px}
+  .ao-row input,.ao-row select{background:var(--s2);border:1px solid var(--border);color:var(--text);font-size:12px;padding:6px 9px;border-radius:6px;outline:none;width:100%;transition:border-color .15s}
+  .ao-row input{font-family:var(--mono)}
+  .ao-row select{font-family:var(--sans)}
+  .ao-row input:focus,.ao-row select:focus{border-color:#F59E0B}
+  .ao-row select option{background:var(--s2)}
+  .ao-headers{display:grid;grid-template-columns:1fr 120px 110px;gap:8px;margin-bottom:4px}
+  .ao-headers span{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+  .ao-total{display:flex;justify-content:space-between;align-items:center;padding:10px 0 0;border-top:1px solid var(--border);margin-top:4px}
+  .ao-total span:first-child{font-size:11px;color:var(--muted)}
+  .ao-total span:last-child{font-family:var(--mono);font-size:13px;font-weight:600;color:#F59E0B}
+  .wa-row{display:none}
+  .wa-row.visible{display:grid}
+
+  /* RIGHT */
+  .right{padding:18px 16px;background:var(--surface);display:flex;flex-direction:column;gap:11px;position:sticky;top:48px;height:calc(100vh - 48px);overflow-y:auto}
+  .pl{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.07em}
+  .total-card{background:rgba(255,122,89,.08);border:1px solid rgba(255,122,89,.25);border-radius:10px;padding:14px;text-align:center}
+  .tc-num{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--orange);line-height:1}
+  .tc-lbl{font-size:11px;color:var(--muted);margin-bottom:4px}
+  .tc-sub{font-size:11px;color:var(--muted);margin-top:3px}
+  .bars{display:flex;flex-direction:column;gap:7px}
+  .brow{display:flex;flex-direction:column;gap:3px}
+  .bmeta{display:flex;justify-content:space-between}
+  .bname{font-size:11px}.bval{font-family:var(--mono);font-size:11px;font-weight:600}
+  .btrack{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+  .bfill{height:100%;border-radius:2px;transition:width .35s ease}
+  .roi-card{background:var(--s2);border:1px solid var(--border);border-radius:9px;padding:12px}
+  .roi-title{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .rrow{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:12px}
+  .rrow:last-child{border-bottom:none;padding-bottom:0}
+  .rrow .rl{color:var(--muted)}.rrow .rv{font-family:var(--mono);font-weight:600;color:var(--text)}
+  .rrow.hi .rl{color:var(--text);font-weight:500}.rrow.hi .rv{color:var(--green);font-size:13px}
+  .verdict{padding:11px 12px;border-radius:8px;background:var(--s2);border:1px solid var(--border)}
+  .vt{font-size:12px;font-weight:700;margin-bottom:3px}
+  .vt.need{color:var(--orange)}.vt.nice{color:var(--blue)}.vt.low{color:var(--muted)}
+  .vb{font-size:11px;color:var(--muted);line-height:1.55}
+  .tp{padding:11px 12px;background:rgba(52,211,153,.06);border:1px solid rgba(52,211,153,.2);border-radius:8px;display:none}
+  .tp-tag{font-size:10px;font-weight:600;color:var(--green);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em}
+  .tp-body{font-size:12px;color:var(--text);line-height:1.6;font-style:italic}
+  hr.dv{border:none;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="tl">
+    <div class="logo">H</div>
+    <h1>Pain Calculator &nbsp;·&nbsp;</h1>
+    <span class="co-name" id="co-display">New Session</span>
+  </div>
+  <button class="btn-reset" onclick="resetAll()">Reset</button>
+</div>
+
+<div class="layout">
+<div class="left">
+
+  <!-- CLIENT -->
+  <div class="client-row">
+    <div><label class="fl">Company</label><input class="fi" id="company" type="text" placeholder="Company name" oninput="update();document.getElementById('co-display').textContent=this.value||'New Session'"></div>
+    <div><label class="fl">Contact</label><input class="fi" id="contact" type="text" placeholder="Contact name"></div>
+    <div><label class="fl">Cost / hr (USD)</label><input class="fi" id="hourly" type="number" value="35" min="1" oninput="update()"></div>
+  </div>
+
+  <!-- PROCESS PAIN -->
+  <div class="sec s-proc open" id="sec-process">
+    <div class="sec-head" onclick="tog('process')">
+      <div class="sh-l"><div class="sdot"></div><div class="stitle">How Your Team Works Today</div></div>
+      <div class="sh-r"><div class="sval empty" id="ptotal">Not filled</div><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg></div>
+    </div>
+    <div class="sec-body">
+      <div class="qrow">
+        <div class="ql">How many people do this manually?</div>
+        <div class="qh">How many on your team handle follow-ups, reporting, or lead assignment by hand?</div>
+        <div class="qi">
+          <div class="qig"><span class="ml">People</span><input type="number" id="p1p" placeholder="5" min="0" oninput="update()"></div>
+          <div class="qx">×</div>
+          <div class="qig"><span class="ml">Hours / week</span><input type="number" id="p1h" placeholder="3" min="0" step="0.5" oninput="update()"></div>
+        </div>
+        <div class="qres" id="p1r">—</div>
+      </div>
+      <div class="qrow">
+        <div class="ql">How long to prepare a report or update the CRM?</div>
+        <div class="qh">When your manager asks for a pipeline update, how long does it take?</div>
+        <div class="qi">
+          <div class="qig"><span class="ml">Hours to prep</span><input type="number" id="p2h" placeholder="2" min="0" step="0.5" oninput="update()"></div>
+          <div class="qx">×</div>
+          <div class="qig"><span class="ml">Times / month</span><input type="number" id="p2f" placeholder="4" min="0" oninput="update()"></div>
+        </div>
+        <div class="qres" id="p2r">—</div>
+      </div>
+      <div class="qrow">
+        <div class="ql">How quickly does your team follow up with a new lead?</div>
+        <div class="qh">When someone calls or submits a form, how long before a rep responds?</div>
+        <div class="qi">
+          <div class="qig"><span class="ml">Response time</span>
+            <select id="p3s" onchange="update()">
+              <option value="0">Same day</option>
+              <option value="1" selected>24–48 hrs</option>
+              <option value="2">3–5 days</option>
+              <option value="3">A week+</option>
+            </select>
+          </div>
+          <div class="qx">→</div>
+          <div class="qig"><span class="ml">Leads / month</span><input type="number" id="p3l" placeholder="50" min="0" oninput="update()"></div>
+        </div>
+        <div class="qres" id="p3r">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BUSINESS PAIN -->
+  <div class="sec s-biz" id="sec-business">
+    <div class="sec-head" onclick="tog('business')">
+      <div class="sh-l"><div class="sdot"></div><div class="stitle">What It's Costing You</div></div>
+      <div class="sh-r"><div class="sval empty" id="btotal">Not filled</div><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg></div>
+    </div>
+    <div class="sec-body">
+      <div class="qrow">
+        <div class="ql">How many leads go cold each month because no one followed up?</div>
+        <div class="qh">How many conversations died last month — rep forgot, too busy, no system?</div>
+        <div class="qi">
+          <div class="qig"><span class="ml">Leads lost / month</span><input type="number" id="b1l" placeholder="10" min="0" oninput="update()"></div>
+          <div class="qx">×</div>
+          <div class="qig"><span class="ml">Avg deal value (USD)</span><input type="number" id="b1v" placeholder="5000" min="0" oninput="update()"></div>
+        </div>
+        <div class="qres" id="b1r">—</div>
+      </div>
+      <div class="qrow">
+        <div class="ql">How many open deals are in your pipeline right now?</div>
+        <div class="qh">Without visibility, about 20% of open pipeline goes cold.</div>
+        <div class="qi">
+          <div class="qig"><span class="ml">Open deals</span><input type="number" id="b2o" placeholder="30" min="0" oninput="update()"></div>
+          <div class="qx">×</div>
+          <div class="qig"><span class="ml">Avg deal value (USD)</span><input type="number" id="b2v" placeholder="5000" min="0" oninput="update()"></div>
+        </div>
+        <div class="qres" id="b2r">—</div>
+      </div>
+      <div class="qrow">
+        <div class="ql">How many customers do you lose each month because no one stayed in touch?</div>
+        <div class="qh">After a deal closes — is there a structured follow-up or does it depend on the rep?</div>
+        <div class="qi">
+          <div class="qig"><span class="ml">Customers / month</span><input type="number" id="b3c" placeholder="3" min="0" oninput="update()"></div>
+          <div class="qx">×</div>
+          <div class="qig"><span class="ml">Annual contract value</span><input type="number" id="b3a" placeholder="8000" min="0" oninput="update()"></div>
+        </div>
+        <div class="qres" id="b3r">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TECH STACK -->
+  <div class="sec s-tech" id="sec-tech">
+    <div class="sec-head" onclick="tog('tech')">
+      <div class="sh-l"><div class="sdot"></div><div class="stitle">Current Tech Stack</div></div>
+      <div class="sh-r"><div class="sval empty" id="techtotal">Not filled</div><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg></div>
+    </div>
+    <div class="sec-body">
+      <div class="th"><span>Tool / Platform</span><span>Cost / month (USD)</span><span></span></div>
+      <div id="tech-rows"></div>
+      <button class="t-add" onclick="addTrow()">+ Add tool</button>
+      <div class="tech-sum"><span>Total current spend / year</span><span id="tech-sum-val">$0</span></div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- HUBSPOT PRICING                     -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="sec s-hs" id="sec-hubspot">
+    <div class="sec-head" onclick="tog('hubspot')">
+      <div class="sh-l"><div class="sdot"></div><div class="stitle">HubSpot Pricing</div></div>
+      <div class="sh-r"><div class="sval empty" id="hstotal">Not filled</div><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg></div>
+    </div>
+    <div class="sec-body">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">Select the Hubs you're pitching:</div>
+      <div class="hub-tabs">
+        <button class="hub-tab" id="tab-sales" onclick="toggleHub('sales')">Sales Hub</button>
+        <button class="hub-tab" id="tab-mktg" onclick="toggleHub('mktg')">Marketing Hub</button>
+        <button class="hub-tab" id="tab-svc" onclick="toggleHub('svc')">Service Hub</button>
+        <button class="hub-tab" id="tab-cms" onclick="toggleHub('cms')">Content Hub</button>
+        <button class="hub-tab" id="tab-ops" onclick="toggleHub('ops')">Operations Hub</button>
+      </div>
+
+      <!-- SALES HUB -->
+      <div class="hub-block" id="hs-sales">
+        <div class="hub-block-title">Sales Hub <span id="sh-sub">$0/yr</span></div>
+        <div class="hg3">
+          <div class="hsf"><label>Tier</label>
+            <select id="sh_tier" onchange="minSeats('sh_seats',this.value,90,5,150,10);update()">
+              <option value="">— Select —</option>
+              <option value="90">Professional · $90/seat/mo</option>
+              <option value="150">Enterprise · $150/seat/mo</option>
+            </select>
+          </div>
+          <div class="hsf"><label>Seats</label><input type="number" id="sh_seats" placeholder="5" min="1" oninput="update()"></div>
+          <div class="hsf"><label>Discount %</label><input type="number" id="sh_disc" placeholder="0" min="0" max="100" value="0" oninput="update()"></div>
+        </div>
+      </div>
+
+      <!-- MARKETING HUB -->
+      <div class="hub-block" id="hs-mktg">
+        <div class="hub-block-title">Marketing Hub <span id="mh-sub">$0/yr</span></div>
+        <div class="hg3">
+          <div class="hsf"><label>Tier</label>
+            <select id="mh_tier" onchange="update()">
+              <option value="">— Select —</option>
+              <option value="890">Professional · $890/mo</option>
+              <option value="3600">Enterprise · $3,600/mo</option>
+            </select>
+          </div>
+          <div class="hsf"><label>Marketing Contacts</label><input type="number" id="mh_contacts" placeholder="e.g. 10000" min="0" oninput="update()"></div>
+          <div class="hsf"><label>Discount %</label><input type="number" id="mh_disc" placeholder="0" min="0" max="100" value="0" oninput="update()"></div>
+        </div>
+        <div class="mktg-note">Contacts pricing: 0–1k included · 1k–10k +$45/mo · 10k–25k +$90/mo · 25k+ +$225/mo</div>
+      </div>
+
+      <!-- SERVICE HUB -->
+      <div class="hub-block" id="hs-svc">
+        <div class="hub-block-title">Service Hub <span id="svch-sub">$0/yr</span></div>
+        <div class="hg3">
+          <div class="hsf"><label>Tier</label>
+            <select id="svch_tier" onchange="minSeats('svch_seats',this.value,90,5,130,10);update()">
+              <option value="">— Select —</option>
+              <option value="90">Professional · $90/seat/mo</option>
+              <option value="130">Enterprise · $130/seat/mo</option>
+            </select>
+          </div>
+          <div class="hsf"><label>Seats</label><input type="number" id="svch_seats" placeholder="5" min="1" oninput="update()"></div>
+          <div class="hsf"><label>Discount %</label><input type="number" id="svch_disc" placeholder="0" min="0" max="100" value="0" oninput="update()"></div>
+        </div>
+      </div>
+
+      <!-- CONTENT HUB -->
+      <div class="hub-block" id="hs-cms">
+        <div class="hub-block-title">Content Hub <span id="ch-sub">$0/yr</span></div>
+        <div class="hg2">
+          <div class="hsf"><label>Tier</label>
+            <select id="ch_tier" onchange="update()">
+              <option value="">— Select —</option>
+              <option value="450">Professional · $450/mo</option>
+              <option value="1500">Enterprise · $1,500/mo</option>
+            </select>
+          </div>
+          <div class="hsf"><label>Discount %</label><input type="number" id="ch_disc" placeholder="0" min="0" max="100" value="0" oninput="update()"></div>
+        </div>
+      </div>
+
+      <!-- OPS HUB -->
+      <div class="hub-block" id="hs-ops">
+        <div class="hub-block-title">Operations Hub <span id="oh-sub">$0/yr</span></div>
+        <div class="hg2">
+          <div class="hsf"><label>Tier</label>
+            <select id="oh_tier" onchange="update()">
+              <option value="">— Select —</option>
+              <option value="720">Professional · $720/mo</option>
+              <option value="2000">Enterprise · $2,000/mo</option>
+            </select>
+          </div>
+          <div class="hsf"><label>Discount %</label><input type="number" id="oh_disc" placeholder="0" min="0" max="100" value="0" oninput="update()"></div>
+        </div>
+      </div>
+
+      <!-- GLOBAL DISCOUNT -->
+      <div class="hs-gdisc-row">
+        <span>Overall deal discount %</span>
+        <input type="number" id="global_disc" placeholder="0" min="0" max="100" value="0" oninput="update()">
+      </div>
+
+      <!-- PRICING SUMMARY -->
+      <div class="hs-final-box" id="hs-final-box" style="display:none">
+        <div class="hsr"><span class="hl">Hubs subtotal / year</span><span class="hv" id="hs-hubs-sum">—</span></div>
+        <div class="hsr"><span class="hl">Deal discount</span><span class="hv" id="hs-gdisc-val">—</span></div>
+        <div class="hsr tot"><span class="hl">Total HubSpot / year</span><span class="hv" id="hs-grand">—</span></div>
+        <div class="hsr sav" id="hs-vs-stack" style="display:none"><span class="hl">vs current tech stack</span><span class="hv" id="hs-vs-val">—</span></div>
+      </div>
+      <div class="hs-note">List pricing. Adjust discount for your actual quote.</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════ -->
+  <!-- ADD-ONS — fully separate section    -->
+  <!-- ═══════════════════════════════════ -->
+  <div class="sec s-ao" id="sec-addons">
+    <div class="sec-head" onclick="tog('addons')">
+      <div class="sh-l"><div class="sdot"></div><div class="stitle">Add-ons</div></div>
+      <div class="sh-r"><div class="sval empty" id="aototal">Not filled</div><svg class="chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6l4 4 4-4"/></svg></div>
+    </div>
+    <div class="sec-body">
+      <div class="ao-headers"><span>Add-on</span><span>Qty / Volume</span><span>Cost / month (USD)</span></div>
+
+      <!-- Breeze AI -->
+      <div class="ao-row">
+        <div><div class="ao-name">Breeze AI / Copilot</div><div class="ao-note">AI assistant — included in Pro & Enterprise</div></div>
+        <div style="font-size:12px;color:var(--muted)">Included in Pro+</div>
+        <input type="number" id="ao_breeze" placeholder="0" min="0" oninput="update()">
+      </div>
+
+      <!-- Additional seats -->
+      <div class="ao-row">
+        <div><div class="ao-name">Additional Seats Pack</div><div class="ao-note">Extra seats beyond your hub allocation</div></div>
+        <input type="number" id="ao_seats_qty" placeholder="seats" min="0" oninput="update()">
+        <input type="number" id="ao_seats_cost" placeholder="25" min="0" oninput="update()">
+      </div>
+
+      <!-- WhatsApp — only relevant for Mktg Hub Pro / Service Hub -->
+      <div class="ao-row wa-row" id="wa-row">
+        <div><div class="ao-name">WhatsApp Messages</div><div class="ao-note">Marketing Hub Pro &amp; Service Hub only</div></div>
+        <input type="number" id="ao_wa_qty" placeholder="1000 msgs" min="0" oninput="update()">
+        <input type="number" id="ao_wa_cost" placeholder="50" min="0" oninput="update()">
+      </div>
+
+      <!-- Calling -->
+      <div class="ao-row">
+        <div><div class="ao-name">Calling Add-on</div><div class="ao-note">Extra calling minutes beyond included</div></div>
+        <input type="number" id="ao_call_qty" placeholder="minutes" min="0" oninput="update()">
+        <input type="number" id="ao_call_cost" placeholder="30" min="0" oninput="update()">
+      </div>
+
+      <!-- Extra marketing contacts -->
+      <div class="ao-row">
+        <div><div class="ao-name">Extra Marketing Contacts</div><div class="ao-note">Beyond your Marketing Hub base tier</div></div>
+        <input type="number" id="ao_mc_qty" placeholder="contacts" min="0" oninput="update()">
+        <input type="number" id="ao_mc_cost" placeholder="225" min="0" oninput="update()">
+      </div>
+
+      <!-- Custom objects note -->
+      <div class="ao-row">
+        <div><div class="ao-name">Custom Objects</div><div class="ao-note">Included in Enterprise tier — no extra charge</div></div>
+        <div style="font-size:12px;color:var(--muted)">Enterprise only</div>
+        <div style="font-size:12px;color:var(--muted)">Included</div>
+      </div>
+
+      <div class="ao-total"><span>Total add-ons / year</span><span id="ao-sum-val">$0</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="right">
+  <div class="pl">Summary</div>
+  <div class="total-card">
+    <div class="tc-lbl">Total Quantified Pain</div>
+    <div class="tc-num" id="grand">$0</div>
+    <div class="tc-sub" id="grand-mo"></div>
+  </div>
+  <div class="bars">
+    <div class="brow"><div class="bmeta"><span class="bname" style="color:var(--orange)">Process</span><span class="bval" style="color:var(--orange)" id="bp-val">$0</span></div><div class="btrack"><div class="bfill" id="bp" style="background:var(--orange);width:0%"></div></div></div>
+    <div class="brow"><div class="bmeta"><span class="bname" style="color:var(--blue)">Business</span><span class="bval" style="color:var(--blue)" id="bb-val">$0</span></div><div class="btrack"><div class="bfill" id="bb" style="background:var(--blue);width:0%"></div></div></div>
+
+    <div class="brow"><div class="bmeta"><span class="bname" style="color:var(--green)">Current tools</span><span class="bval" style="color:var(--green)" id="bt-val">—</span></div><div class="btrack"><div class="bfill" id="bt" style="background:var(--green);width:0%"></div></div></div>
+  </div>
+  <hr class="dv">
+  <div class="roi-card" id="roi-card" style="display:none">
+    <div class="roi-title">ROI Breakdown</div>
+    <div class="rrow"><span class="rl">Pain / year</span><span class="rv" id="r-pain">—</span></div>
+    <div class="rrow" id="r-stack-row" style="display:none"><span class="rl">Current tools / year</span><span class="rv" id="r-stack">—</span></div>
+    <div class="rrow"><span class="rl">HubSpot + add-ons / year</span><span class="rv" id="r-hs">—</span></div>
+    <div class="rrow" id="r-rep-row" style="display:none"><span class="rl">Tools replaced</span><span class="rv" style="color:var(--green)" id="r-rep">—</span></div>
+    <div class="rrow"><span class="rl">Net saving / year</span><span class="rv" id="r-net">—</span></div>
+    <div class="rrow hi"><span class="rl">ROI</span><span class="rv" id="r-roi">—</span></div>
+    <div class="rrow hi"><span class="rl">Payback</span><span class="rv" id="r-pay">—</span></div>
+  </div>
+  <div class="verdict">
+    <div class="vt low" id="v-tag">Fill in the calculator</div>
+    <div class="vb" id="v-body">Answers appear as you type.</div>
+  </div>
+  <div class="tp" id="tp">
+    <div class="tp-tag">Close with this</div>
+    <div class="tp-body" id="tp-body"></div>
+  </div>
+</div>
+</div>
+
+<script>
+  const g=id=>document.getElementById(id);
+  const nv=id=>parseFloat(g(id)?.value)||0;
+  const tv=id=>g(id)?.value.trim()||'';
+  const sv=id=>parseInt(g(id)?.value)||0;
+  const fmt=v=>v>=1000000?'$'+(v/1e6).toFixed(1)+'M':v>=1000?'$'+(v/1000).toFixed(0)+'K':'$'+Math.round(v).toLocaleString();
+
+  const activeHubs=new Set();
+
+  function toggleHub(h){
+    const tab=g('tab-'+h),sec=g('hs-'+h);
+    if(activeHubs.has(h)){activeHubs.delete(h);tab.classList.remove('on');sec.classList.remove('show');}
+    else{activeHubs.add(h);tab.classList.add('on');sec.classList.add('show');}
+    // show WhatsApp only if mktg or svc active
+    const showWa=activeHubs.has('mktg')||activeHubs.has('svc');
+    g('wa-row').classList.toggle('visible',showWa);
+    update();
+  }
+
+  function minSeats(seatsId,tierVal,rate1,min1,rate2,min2){
+    const s=g(seatsId);
+    if(+tierVal===rate1&&(!s.value||+s.value<min1)) s.value=min1;
+    if(+tierVal===rate2&&(!s.value||+s.value<min2)) s.value=min2;
+  }
+
+  function calcSeatHub(tierEl,seatsEl,discEl,subEl){
+    const tier=nv(tierEl),disc=nv(discEl)/100;
+    if(!tier) return 0;
+    const seats=Math.max(nv(seatsEl),1);
+    const annual=seats*tier*12*(1-disc);
+    g(subEl).textContent=fmt(annual)+'/yr'; return annual;
+  }
+
+  function calcFlatHub(tierEl,discEl,subEl){
+    const tier=nv(tierEl),disc=nv(discEl)/100;
+    if(!tier) return 0;
+    const annual=tier*12*(1-disc);
+    g(subEl).textContent=fmt(annual)+'/yr'; return annual;
+  }
+
+  function mktgContactAdd(contacts){
+    if(!contacts||contacts<=1000) return 0;
+    if(contacts<=10000) return 45;
+    if(contacts<=25000) return 90;
+    return 225;
+  }
+
+  function addTrow(name='',cost=''){
+    const id='tr'+Date.now()+Math.random().toString(36).slice(2);
+    const c=g('tech-rows'),r=document.createElement('div');
+    r.className='trow';r.id=id;
+    r.innerHTML=`<input type="text" placeholder="Tool name" value="${name}" oninput="update()"><input type="number" placeholder="200" value="${cost}" min="0" oninput="update()"><button class="t-del" onclick="g('${id}').remove();update()">×</button>`;
+    c.appendChild(r);update();
+  }
+
+  function techTotal(){
+    let t=0;
+    document.querySelectorAll('#tech-rows .trow').forEach(r=>{t+=parseFloat(r.querySelectorAll('input')[1].value)||0;});
+    return t*12;
+  }
+
+  function update(){
+    const HR=nv('hourly')||35;
+
+    // PROCESS
+    const p1=nv('p1p')*nv('p1h')*HR*52;
+    g('p1r').innerHTML=(nv('p1p')&&nv('p1h'))?`<span class="n">${nv('p1p')*nv('p1h')} hrs/week</span> = <span class="n">${fmt(p1)}/yr</span> wasted salary`:'—';
+    const p2=nv('p2h')*nv('p2f')*HR*12;
+    g('p2r').innerHTML=(nv('p2h')&&nv('p2f'))?`<span class="n">${nv('p2h')} hrs × ${nv('p2f')}×/mo</span> = <span class="n">${fmt(p2)}/yr</span> on reporting`:'—';
+    const rsp=sv('p3s'),rLbls=['No significant loss','~30% go cold','~60% go cold','~80% go cold'];
+    g('p3r').innerHTML=nv('p3l')?`${nv('p3l')} leads/mo — <span class="n">${rLbls[rsp]}</span>`:'—';
+    const proc=p1+p2;
+    g('ptotal').textContent=proc>0?fmt(proc)+'/yr':'Not filled';
+    g('ptotal').className='sval'+(proc>0?'':' empty');
+
+    // BUSINESS
+    const rpen=[0,.3,.6,.8][rsp];
+    const b1=nv('b1l')*nv('b1v')*12,rll=nv('p3l')*rpen*(nv('b1v')||3000)*12;
+    g('b1r').innerHTML=(nv('b1l')&&nv('b1v'))?`<span class="n">${nv('b1l')} × ${fmt(nv('b1v'))} × 12</span> = <span class="n">${fmt(b1)}/yr</span>`+(rll>0&&rsp>0?` + <span class="n">${fmt(rll)}</span> slow response`:''):'—';
+    const b2r=nv('b2o')*nv('b2v')*.2;
+    g('b2r').innerHTML=(nv('b2o')&&nv('b2v'))?`${fmt(nv('b2o')*nv('b2v'))} pipeline → <span class="n">${fmt(b2r)}</span> at risk (20%)`:'—';
+    const b3=nv('b3c')*nv('b3a')*12;
+    g('b3r').innerHTML=(nv('b3c')&&nv('b3a'))?`<span class="n">${nv('b3c')} × ${fmt(nv('b3a'))} × 12</span> = <span class="n">${fmt(b3)}/yr</span> churn`:'—';
+    const biz=b1+rll+b2r+b3;
+    g('btotal').textContent=biz>0?fmt(biz)+'/yr':'Not filled';
+    g('btotal').className='sval'+(biz>0?'':' empty');
+
+    // TECH
+    const tech=techTotal();
+    g('tech-sum-val').textContent=tech>0?fmt(tech):'$0';
+    g('techtotal').textContent=tech>0?fmt(tech)+'/yr':'Not filled';
+    g('techtotal').className='sval'+(tech>0?'':' empty');
+
+    // HUBS
+    let hubsAnnual=0;
+    if(activeHubs.has('sales')) hubsAnnual+=calcSeatHub('sh_tier','sh_seats','sh_disc','sh-sub');
+    else g('sh-sub').textContent='$0/yr';
+    if(activeHubs.has('mktg')){
+      const mt=nv('mh_tier'),md=nv('mh_disc')/100,ca=mktgContactAdd(nv('mh_contacts'));
+      const ma=mt>0?(mt+ca)*12*(1-md):0;
+      g('mh-sub').textContent=fmt(ma)+'/yr'; hubsAnnual+=ma;
+    } else g('mh-sub').textContent='$0/yr';
+    if(activeHubs.has('svc')) hubsAnnual+=calcSeatHub('svch_tier','svch_seats','svch_disc','svch-sub');
+    else g('svch-sub').textContent='$0/yr';
+    if(activeHubs.has('cms')) hubsAnnual+=calcFlatHub('ch_tier','ch_disc','ch-sub');
+    else g('ch-sub').textContent='$0/yr';
+    if(activeHubs.has('ops')) hubsAnnual+=calcFlatHub('oh_tier','oh_disc','oh-sub');
+    else g('oh-sub').textContent='$0/yr';
+
+    // GLOBAL DISCOUNT ON HUBS
+    const gd=nv('global_disc')/100;
+    const hubsFinal=hubsAnnual*(1-gd);
+
+    if(hubsAnnual>0){
+      g('hs-final-box').style.display='block';
+      g('hs-hubs-sum').textContent=fmt(hubsAnnual);
+      g('hs-gdisc-val').textContent=gd>0?`-${fmt(hubsAnnual*gd)}`:'None';
+      g('hs-grand').textContent=fmt(hubsFinal);
+      g('hstotal').textContent=fmt(hubsFinal)+'/yr'; g('hstotal').className='sval';
+      if(tech>0){
+        const diff=tech-hubsFinal; g('hs-vs-stack').style.display='flex';
+        g('hs-vs-val').textContent=(diff>=0?'Saves ':'Costs more ')+fmt(Math.abs(diff))+'/yr vs stack';
+        g('hs-vs-val').style.color=diff>=0?'var(--green)':'#F87171';
+      } else g('hs-vs-stack').style.display='none';
+    } else {
+      g('hs-final-box').style.display='none';
+      g('hstotal').textContent='Not filled'; g('hstotal').className='sval empty';
+    }
+
+    // ADD-ONS (fully separate — no global discount applied)
+    const aoBreeze=nv('ao_breeze')*12;
+    const aoSeats=nv('ao_seats_qty')*nv('ao_seats_cost')*12;
+    const aoWa=nv('ao_wa_cost')*12;
+    const aoCall=nv('ao_call_cost')*12;
+    const aoMc=nv('ao_mc_cost')*12;
+    const addonsAnnual=aoBreeze+aoSeats+aoWa+aoCall+aoMc;
+    g('ao-sum-val').textContent=addonsAnnual>0?fmt(addonsAnnual):'$0';
+    g('aototal').textContent=addonsAnnual>0?fmt(addonsAnnual)+'/yr':'Not filled';
+    g('aototal').className='sval'+(addonsAnnual>0?'':' empty');
+
+    // TOTAL HS COST = hubs + addons
+    const hsTotal=hubsFinal+addonsAnnual;
+
+    // GRAND TOTAL PAIN
+    const grand=proc+biz;
+    g('grand').textContent=fmt(grand);
+    g('grand-mo').textContent=grand>0?'≈ '+fmt(grand/12)+' / month':'';
+
+    // BARS
+    const mx=Math.max(grand,tech,1);
+    g('bp').style.width=Math.max((proc/mx)*100,proc>0?3:0)+'%'; g('bp-val').textContent=fmt(proc);
+    g('bb').style.width=Math.max((biz/mx)*100,biz>0?3:0)+'%'; g('bb-val').textContent=fmt(biz);
+    g('bi').style.width=hasI?'25%':'0%'; g('bi-val').textContent=hasI?'✓ Noted':'—';
+    g('bt').style.width=Math.max((tech/mx)*100,tech>0?3:0)+'%'; g('bt-val').textContent=tech>0?fmt(tech):'—';
+
+    // ROI
+    if(grand>0||hsTotal>0){
+      g('roi-card').style.display='block';
+      g('r-pain').textContent=grand>0?fmt(grand):'—';
+      g('r-hs').textContent=hsTotal>0?fmt(hsTotal):'← fill pricing';
+      if(tech>0){g('r-stack-row').style.display='flex';g('r-stack').textContent=fmt(tech);g('r-rep-row').style.display='flex';g('r-rep').textContent='-'+fmt(tech)+' saved';}
+      else{g('r-stack-row').style.display='none';g('r-rep-row').style.display='none';}
+      if(grand>0&&hsTotal>0){
+        const net=grand-hsTotal+tech,mul=(grand/hsTotal).toFixed(1),pay=Math.ceil((hsTotal/grand)*12);
+        g('r-net').textContent=fmt(net); g('r-roi').textContent=mul+'×'; g('r-pay').textContent=pay<=1?'< 1 month':pay+' months';
+      } else{g('r-net').textContent='—';g('r-roi').textContent='—';g('r-pay').textContent='—';}
+    } else g('roi-card').style.display='none';
+
+    // VERDICT
+    const co=tv('company')||'this company';
+    const vt=g('v-tag'),vb=g('v-body');
+    if(grand>1000000){vt.textContent='🔴 Critical — Need-to-Have';vt.className='vt need';vb.textContent=`At ${fmt(grand)}/yr this is a board-level problem.`;}
+    else if(grand>300000){vt.textContent='🔴 Need-to-Have';vt.className='vt need';vb.textContent=`${fmt(grand)}/yr — HubSpot is a recovery vehicle, not a cost.`;}
+    else if(grand>80000){vt.textContent='🟠 Need-to-Have';vt.className='vt need';vb.textContent=`${fmt(grand)}/yr justifies the investment.`;}
+    else if(grand>20000){vt.textContent='🟡 Build the case';vt.className='vt nice';vb.textContent=`${fmt(grand)}/yr — dig deeper into pipeline or churn.`;}
+    else if(grand>0){vt.textContent='⚠️ Needs more depth';vt.className='vt low';vb.textContent='Pain is low. Look harder at pipeline or churn.';}
+    else{vt.textContent='Fill in the calculator';vt.className='vt low';vb.textContent='Answers appear as you type.';}
+
+    // TALKING POINT
+    const tp=g('tp'),tpb=g('tp-body');
+    if(grand>0&&hsTotal>0){
+      tp.style.display='block';
+      const mul=(grand/hsTotal).toFixed(1),pay=Math.ceil((hsTotal/grand)*12);
+      let line=`"Based on what you've shared, ${co} is losing around ${fmt(grand)}/yr.`;
+      if(tech>0) line+=` You're already spending ${fmt(tech)}/yr on tools that don't talk to each other.`;
+      line+=` HubSpot costs ${fmt(hsTotal)}/yr — that's a ${mul}× return, recovered in ${pay} months. The question isn't whether to fix this — it's when."`;
+      tpb.textContent=line;
+    } else if(grand>0){
+      tp.style.display='block';
+      let line=`"${co} is losing roughly ${fmt(grand)}/yr.`;
+      if(tech>0) line+=` You're already spending ${fmt(tech)}/yr on disconnected tools.`;
+      line+=` HubSpot isn't a new cost — it's how you stop the bleeding."`;
+      tpb.textContent=line;
+    } else tp.style.display='none';
+  }
+
+  function tog(n){g('sec-'+n).classList.toggle('open');}
+
+  function resetAll(){
+    ['company','contact','p1p','p1h','p2h','p2f','p3l','b1l','b1v','b2o','b2v','b3c','b3a',
+     'sh_seats','sh_disc','mh_contacts','mh_disc','svch_seats','svch_disc','ch_disc','oh_disc','global_disc',
+     'ao_breeze','ao_seats_qty','ao_seats_cost','ao_wa_qty','ao_wa_cost','ao_call_qty','ao_call_cost','ao_mc_qty','ao_mc_cost'
+    ].forEach(id=>{const el=g(id);if(el)el.value='';});
+    ['p3s','sh_tier','mh_tier','svch_tier','ch_tier','oh_tier'].forEach(id=>{const el=g(id);if(el)el.selectedIndex=0;});
+    g('p3s').value='1'; g('hourly').value='35'; g('global_disc').value='0';
+    g('tech-rows').innerHTML=''; g('co-display').textContent='New Session';
+    g('wa-row').classList.remove('visible');
+    activeHubs.clear();
+    ['sales','mktg','svc','cms','ops'].forEach(h=>{g('tab-'+h).classList.remove('on');g('hs-'+h).classList.remove('show');});
+    initTech(); update();
+  }
+
+  function initTech(){
+    [['CRM (e.g. Salesforce, Zoho)',''],['Email marketing (e.g. Mailchimp)',''],['Sales tools (e.g. Outreach)','']].forEach(([n,c])=>addTrow(n,c));
+  }
+
+  initTech(); update();
+</script>
+</body>
+</html>
